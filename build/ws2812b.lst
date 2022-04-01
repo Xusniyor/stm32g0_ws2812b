@@ -1,0 +1,1061 @@
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 1
+
+
+   1              		.cpu cortex-m0plus
+   2              		.arch armv6s-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.file	"ws2812b.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.code_in_ram,"ax",%progbits
+  18              		.align	1
+  19              		.global	__ws2812b_update
+  20              		.syntax unified
+  21              		.code	16
+  22              		.thumb_func
+  24              	__ws2812b_update:
+  25              	.LVL0:
+  26              	.LFB302:
+  27              		.file 1 "ws2812b.c"
+   1:ws2812b.c     **** /**
+   2:ws2812b.c     ****   ******************************************************************************
+   3:ws2812b.c     ****   * @file           : ws2812b.c
+   4:ws2812b.c     ****   * @brief          : 
+   5:ws2812b.c     ****   ******************************************************************************
+   6:ws2812b.c     ****   * @attention
+   7:ws2812b.c     ****   * eslatma!! bu kutubxona faqat OS dan tashqarida ishlatishga mo`ljalangan 
+   8:ws2812b.c     ****   * agar siz OS bilan ishlatmoqchi bo`lsangiz unga o`zgartirishlar kiritishingiz kerak
+   9:ws2812b.c     ****   ******************************************************************************
+  10:ws2812b.c     ****   */
+  11:ws2812b.c     **** #include "ws2812b.h"
+  12:ws2812b.c     **** #include <stdlib.h>
+  13:ws2812b.c     **** #include <string.h>
+  14:ws2812b.c     **** 
+  15:ws2812b.c     **** RAM_FUNC void __ws2812b_update(ws2812b *hws);
+  16:ws2812b.c     **** uint8_t __ws2812b_shift_byte(uint8_t byte);
+  17:ws2812b.c     **** 
+  18:ws2812b.c     **** ws2812b_state ws2812b_init(ws2812b *hws)
+  19:ws2812b.c     **** {
+  20:ws2812b.c     ****     hws->buf = (uint8_t *)malloc(hws->length * sizeof(uint8_t) * 3);
+  21:ws2812b.c     ****     memset(hws->buf, 0, hws->length * sizeof(uint8_t) * 3);
+  22:ws2812b.c     ****     return WS2812B_OK;
+  23:ws2812b.c     **** }
+  24:ws2812b.c     **** ws2812b_state ws2812b_set(ws2812b *hws, uint16_t index, uint32_t color)
+  25:ws2812b.c     **** {
+  26:ws2812b.c     ****     if (index >= hws->length)
+  27:ws2812b.c     ****         return WS2812B_ERROR;
+  28:ws2812b.c     ****     hws->buf[index*3]   = __ws2812b_shift_byte((uint8_t)color);
+  29:ws2812b.c     ****     hws->buf[index*3+1] = __ws2812b_shift_byte((uint8_t)(color >> 8));
+  30:ws2812b.c     ****     hws->buf[index*3+2] = __ws2812b_shift_byte((uint8_t)(color >> 16));
+  31:ws2812b.c     ****     return WS2812B_OK;
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 2
+
+
+  32:ws2812b.c     **** }
+  33:ws2812b.c     **** uint32_t ws2812b_get(ws2812b *hws, uint16_t index)
+  34:ws2812b.c     **** {
+  35:ws2812b.c     ****     /* Hali yozilmadi */
+  36:ws2812b.c     ****     return 0;
+  37:ws2812b.c     **** }
+  38:ws2812b.c     **** ws2812b_state ws2812b_update(ws2812b *hws)
+  39:ws2812b.c     **** {
+  40:ws2812b.c     ****     __disable_irq();
+  41:ws2812b.c     ****     __ws2812b_update(hws);
+  42:ws2812b.c     ****     __enable_irq();
+  43:ws2812b.c     ****     return WS2812B_OK;
+  44:ws2812b.c     **** }
+  45:ws2812b.c     **** ws2812b_state ws2812b_delete_init(ws2812b *hws)
+  46:ws2812b.c     **** {
+  47:ws2812b.c     ****     free(hws->buf);
+  48:ws2812b.c     ****     return WS2812B_OK;
+  49:ws2812b.c     **** }
+  50:ws2812b.c     **** /* The ws2812b update runs from RAM */
+  51:ws2812b.c     **** RAM_FUNC void __ws2812b_update(ws2812b *hws)
+  52:ws2812b.c     **** {
+  28              		.loc 1 52 1 view -0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		.loc 1 52 1 is_stmt 0 view .LVU1
+  33 0000 30B5     		push	{r4, r5, lr}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 12
+  36              		.cfi_offset 4, -12
+  37              		.cfi_offset 5, -8
+  38              		.cfi_offset 14, -4
+  53:ws2812b.c     ****     uint32_t len = hws->length * sizeof(uint8_t) * 3 * 8 + 1;
+  39              		.loc 1 53 5 is_stmt 1 view .LVU2
+  40              		.loc 1 53 23 is_stmt 0 view .LVU3
+  41 0002 C388     		ldrh	r3, [r0, #6]
+  42              		.loc 1 53 54 view .LVU4
+  43 0004 5D00     		lsls	r5, r3, #1
+  44 0006 ED18     		adds	r5, r5, r3
+  45 0008 ED00     		lsls	r5, r5, #3
+  46              		.loc 1 53 14 view .LVU5
+  47 000a 0135     		adds	r5, r5, #1
+  48              	.LVL1:
+  54:ws2812b.c     ****     for (uint32_t i = 0; i < len; i++)
+  49              		.loc 1 54 5 is_stmt 1 view .LVU6
+  50              	.LBB6:
+  51              		.loc 1 54 10 view .LVU7
+  52              		.loc 1 54 19 is_stmt 0 view .LVU8
+  53 000c 0023     		movs	r3, #0
+  54              		.loc 1 54 5 view .LVU9
+  55 000e 3CE0     		b	.L2
+  56              	.LVL2:
+  57              	.L3:
+  55:ws2812b.c     ****     {
+  56:ws2812b.c     ****         // set pin to high
+  57:ws2812b.c     ****         SET_PIN_HIGH(hws->gpio, hws->pin);
+  58:ws2812b.c     ****         if (hws->buf[(uint32_t)(i/8)]&(uint8_t)(1 << (i%8)))
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 3
+
+
+  59:ws2812b.c     ****         {
+  60:ws2812b.c     ****             // wait 0.8us
+  61:ws2812b.c     ****             asm("nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  62:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  63:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n");
+  64:ws2812b.c     ****             // set pin to low
+  65:ws2812b.c     ****             SET_PIN_LOW(hws->gpio, hws->pin);
+  66:ws2812b.c     ****             // wait 0.45us
+  67:ws2812b.c     ****             asm("nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  68:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n");
+  69:ws2812b.c     ****         }
+  70:ws2812b.c     ****         else
+  71:ws2812b.c     ****         {
+  72:ws2812b.c     ****             // wait 0.4us
+  73:ws2812b.c     ****             asm("nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  58              		.loc 1 73 13 is_stmt 1 view .LVU10
+  59              		.syntax divided
+  60              	@ 73 "ws2812b.c" 1
+  61 0010 C046     		nop
+  62 0012 C046     	nop
+  63 0014 C046     	nop
+  64 0016 C046     	nop
+  65 0018 C046     	nop
+  66 001a C046     	nop
+  67 001c C046     	nop
+  68 001e C046     	nop
+  69 0020 C046     	nop
+  70 0022 C046     	nop
+  71 0024 C046     	nop
+  72 0026 C046     	nop
+  73              	
+  74              	@ 0 "" 2
+  74:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n");
+  75:ws2812b.c     ****             // set pin to low
+  76:ws2812b.c     ****             SET_PIN_LOW(hws->gpio, hws->pin);
+  75              		.loc 1 76 13 view .LVU11
+  76              		.thumb
+  77              		.syntax unified
+  78 0028 8188     		ldrh	r1, [r0, #4]
+  79 002a 0268     		ldr	r2, [r0]
+  80 002c 9162     		str	r1, [r2, #40]
+  77:ws2812b.c     ****             // wait 0.85us
+  78:ws2812b.c     ****             asm("nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  81              		.loc 1 78 13 view .LVU12
+  82              		.syntax divided
+  83              	@ 78 "ws2812b.c" 1
+  84 002e C046     		nop
+  85 0030 C046     	nop
+  86 0032 C046     	nop
+  87 0034 C046     	nop
+  88 0036 C046     	nop
+  89 0038 C046     	nop
+  90 003a C046     	nop
+  91 003c C046     	nop
+  92 003e C046     	nop
+  93 0040 C046     	nop
+  94 0042 C046     	nop
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 4
+
+
+  95 0044 C046     	nop
+  96 0046 C046     	nop
+  97 0048 C046     	nop
+  98 004a C046     	nop
+  99 004c C046     	nop
+ 100 004e C046     	nop
+ 101 0050 C046     	nop
+ 102 0052 C046     	nop
+ 103 0054 C046     	nop
+ 104 0056 C046     	nop
+ 105 0058 C046     	nop
+ 106 005a C046     	nop
+ 107 005c C046     	nop
+ 108 005e C046     	nop
+ 109 0060 C046     	nop
+ 110 0062 C046     	nop
+ 111 0064 C046     	nop
+ 112 0066 C046     	nop
+ 113 0068 C046     	nop
+ 114 006a C046     	nop
+ 115 006c C046     	nop
+ 116 006e C046     	nop
+ 117 0070 C046     	nop
+ 118 0072 C046     	nop
+ 119 0074 C046     	nop
+ 120 0076 C046     	nop
+ 121 0078 C046     	nop
+ 122 007a C046     	nop
+ 123 007c C046     	nop
+ 124 007e C046     	nop
+ 125 0080 C046     	nop
+ 126 0082 C046     	nop
+ 127 0084 C046     	nop
+ 128 0086 C046     	nop
+ 129              	
+ 130              	@ 0 "" 2
+ 131              		.thumb
+ 132              		.syntax unified
+ 133              	.L4:
+  54:ws2812b.c     ****     {
+ 134              		.loc 1 54 35 discriminator 2 view .LVU13
+  54:ws2812b.c     ****     {
+ 135              		.loc 1 54 36 is_stmt 0 discriminator 2 view .LVU14
+ 136 0088 0133     		adds	r3, r3, #1
+ 137              	.LVL3:
+ 138              	.L2:
+  54:ws2812b.c     ****     {
+ 139              		.loc 1 54 26 is_stmt 1 discriminator 1 view .LVU15
+  54:ws2812b.c     ****     {
+ 140              		.loc 1 54 5 is_stmt 0 discriminator 1 view .LVU16
+ 141 008a AB42     		cmp	r3, r5
+ 142 008c 43D2     		bcs	.L6
+  57:ws2812b.c     ****         if (hws->buf[(uint32_t)(i/8)]&(uint8_t)(1 << (i%8)))
+ 143              		.loc 1 57 9 is_stmt 1 view .LVU17
+ 144 008e 8188     		ldrh	r1, [r0, #4]
+ 145 0090 0268     		ldr	r2, [r0]
+ 146 0092 9161     		str	r1, [r2, #24]
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 5
+
+
+  58:ws2812b.c     ****         {
+ 147              		.loc 1 58 9 view .LVU18
+  58:ws2812b.c     ****         {
+ 148              		.loc 1 58 22 is_stmt 0 view .LVU19
+ 149 0094 DA08     		lsrs	r2, r3, #3
+  58:ws2812b.c     ****         {
+ 150              		.loc 1 58 21 view .LVU20
+ 151 0096 8168     		ldr	r1, [r0, #8]
+ 152 0098 8C5C     		ldrb	r4, [r1, r2]
+  58:ws2812b.c     ****         {
+ 153              		.loc 1 58 56 view .LVU21
+ 154 009a 0721     		movs	r1, #7
+ 155 009c 1940     		ands	r1, r3
+  58:ws2812b.c     ****         {
+ 156              		.loc 1 58 51 view .LVU22
+ 157 009e 0122     		movs	r2, #1
+ 158 00a0 8A40     		lsls	r2, r2, r1
+  58:ws2812b.c     ****         {
+ 159              		.loc 1 58 12 view .LVU23
+ 160 00a2 2242     		tst	r2, r4
+ 161 00a4 00D1     		bne	.LCB69
+ 162 00a6 B3E7     		b	.L3	@long jump
+ 163              	.LCB69:
+  61:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+ 164              		.loc 1 61 13 is_stmt 1 view .LVU24
+ 165              		.syntax divided
+ 166              	@ 61 "ws2812b.c" 1
+ 167 00a8 C046     		nop
+ 168 00aa C046     	nop
+ 169 00ac C046     	nop
+ 170 00ae C046     	nop
+ 171 00b0 C046     	nop
+ 172 00b2 C046     	nop
+ 173 00b4 C046     	nop
+ 174 00b6 C046     	nop
+ 175 00b8 C046     	nop
+ 176 00ba C046     	nop
+ 177 00bc C046     	nop
+ 178 00be C046     	nop
+ 179 00c0 C046     	nop
+ 180 00c2 C046     	nop
+ 181 00c4 C046     	nop
+ 182 00c6 C046     	nop
+ 183 00c8 C046     	nop
+ 184 00ca C046     	nop
+ 185 00cc C046     	nop
+ 186 00ce C046     	nop
+ 187 00d0 C046     	nop
+ 188 00d2 C046     	nop
+ 189 00d4 C046     	nop
+ 190 00d6 C046     	nop
+ 191 00d8 C046     	nop
+ 192 00da C046     	nop
+ 193 00dc C046     	nop
+ 194 00de C046     	nop
+ 195 00e0 C046     	nop
+ 196 00e2 C046     	nop
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 6
+
+
+ 197 00e4 C046     	nop
+ 198 00e6 C046     	nop
+ 199 00e8 C046     	nop
+ 200              	
+ 201              	@ 0 "" 2
+  65:ws2812b.c     ****             // wait 0.45us
+ 202              		.loc 1 65 13 view .LVU25
+ 203              		.thumb
+ 204              		.syntax unified
+ 205 00ea 8188     		ldrh	r1, [r0, #4]
+ 206 00ec 0268     		ldr	r2, [r0]
+ 207 00ee 9162     		str	r1, [r2, #40]
+  67:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n");
+ 208              		.loc 1 67 13 view .LVU26
+ 209              		.syntax divided
+ 210              	@ 67 "ws2812b.c" 1
+ 211 00f0 C046     		nop
+ 212 00f2 C046     	nop
+ 213 00f4 C046     	nop
+ 214 00f6 C046     	nop
+ 215 00f8 C046     	nop
+ 216 00fa C046     	nop
+ 217 00fc C046     	nop
+ 218 00fe C046     	nop
+ 219 0100 C046     	nop
+ 220 0102 C046     	nop
+ 221 0104 C046     	nop
+ 222 0106 C046     	nop
+ 223 0108 C046     	nop
+ 224 010a C046     	nop
+ 225 010c C046     	nop
+ 226 010e C046     	nop
+ 227 0110 C046     	nop
+ 228 0112 C046     	nop
+ 229              	
+ 230              	@ 0 "" 2
+ 231              		.thumb
+ 232              		.syntax unified
+ 233 0114 B8E7     		b	.L4
+ 234              	.L6:
+  67:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n");
+ 235              		.loc 1 67 13 is_stmt 0 view .LVU27
+ 236              	.LBE6:
+  79:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  80:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  81:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n"
+  82:ws2812b.c     ****                 "nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n""nop\n");
+  83:ws2812b.c     ****         }
+  84:ws2812b.c     ****     }
+  85:ws2812b.c     **** }
+ 237              		.loc 1 85 1 view .LVU28
+ 238              		@ sp needed
+ 239              	.LVL4:
+ 240              		.loc 1 85 1 view .LVU29
+ 241 0116 30BD     		pop	{r4, r5, pc}
+ 242              		.cfi_endproc
+ 243              	.LFE302:
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 7
+
+
+ 245              		.section	.text.ws2812b_init,"ax",%progbits
+ 246              		.align	1
+ 247              		.global	ws2812b_init
+ 248              		.syntax unified
+ 249              		.code	16
+ 250              		.thumb_func
+ 252              	ws2812b_init:
+ 253              	.LVL5:
+ 254              	.LFB297:
+  19:ws2812b.c     ****     hws->buf = (uint8_t *)malloc(hws->length * sizeof(uint8_t) * 3);
+ 255              		.loc 1 19 1 is_stmt 1 view -0
+ 256              		.cfi_startproc
+ 257              		@ args = 0, pretend = 0, frame = 0
+ 258              		@ frame_needed = 0, uses_anonymous_args = 0
+  19:ws2812b.c     ****     hws->buf = (uint8_t *)malloc(hws->length * sizeof(uint8_t) * 3);
+ 259              		.loc 1 19 1 is_stmt 0 view .LVU31
+ 260 0000 70B5     		push	{r4, r5, r6, lr}
+ 261              	.LCFI1:
+ 262              		.cfi_def_cfa_offset 16
+ 263              		.cfi_offset 4, -16
+ 264              		.cfi_offset 5, -12
+ 265              		.cfi_offset 6, -8
+ 266              		.cfi_offset 14, -4
+ 267 0002 0500     		movs	r5, r0
+  20:ws2812b.c     ****     memset(hws->buf, 0, hws->length * sizeof(uint8_t) * 3);
+ 268              		.loc 1 20 5 is_stmt 1 view .LVU32
+  20:ws2812b.c     ****     memset(hws->buf, 0, hws->length * sizeof(uint8_t) * 3);
+ 269              		.loc 1 20 37 is_stmt 0 view .LVU33
+ 270 0004 C388     		ldrh	r3, [r0, #6]
+  20:ws2812b.c     ****     memset(hws->buf, 0, hws->length * sizeof(uint8_t) * 3);
+ 271              		.loc 1 20 27 view .LVU34
+ 272 0006 5C00     		lsls	r4, r3, #1
+ 273 0008 E418     		adds	r4, r4, r3
+ 274 000a 2000     		movs	r0, r4
+ 275              	.LVL6:
+  20:ws2812b.c     ****     memset(hws->buf, 0, hws->length * sizeof(uint8_t) * 3);
+ 276              		.loc 1 20 27 view .LVU35
+ 277 000c FFF7FEFF 		bl	malloc
+ 278              	.LVL7:
+  20:ws2812b.c     ****     memset(hws->buf, 0, hws->length * sizeof(uint8_t) * 3);
+ 279              		.loc 1 20 14 view .LVU36
+ 280 0010 A860     		str	r0, [r5, #8]
+  21:ws2812b.c     ****     return WS2812B_OK;
+ 281              		.loc 1 21 5 is_stmt 1 view .LVU37
+ 282 0012 2200     		movs	r2, r4
+ 283 0014 0021     		movs	r1, #0
+ 284 0016 FFF7FEFF 		bl	memset
+ 285              	.LVL8:
+  22:ws2812b.c     **** }
+ 286              		.loc 1 22 5 view .LVU38
+  23:ws2812b.c     **** ws2812b_state ws2812b_set(ws2812b *hws, uint16_t index, uint32_t color)
+ 287              		.loc 1 23 1 is_stmt 0 view .LVU39
+ 288 001a 0020     		movs	r0, #0
+ 289              		@ sp needed
+ 290              	.LVL9:
+  23:ws2812b.c     **** ws2812b_state ws2812b_set(ws2812b *hws, uint16_t index, uint32_t color)
+ 291              		.loc 1 23 1 view .LVU40
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 8
+
+
+ 292 001c 70BD     		pop	{r4, r5, r6, pc}
+ 293              		.cfi_endproc
+ 294              	.LFE297:
+ 296              		.section	.text.ws2812b_get,"ax",%progbits
+ 297              		.align	1
+ 298              		.global	ws2812b_get
+ 299              		.syntax unified
+ 300              		.code	16
+ 301              		.thumb_func
+ 303              	ws2812b_get:
+ 304              	.LVL10:
+ 305              	.LFB299:
+  34:ws2812b.c     ****     /* Hali yozilmadi */
+ 306              		.loc 1 34 1 is_stmt 1 view -0
+ 307              		.cfi_startproc
+ 308              		@ args = 0, pretend = 0, frame = 0
+ 309              		@ frame_needed = 0, uses_anonymous_args = 0
+ 310              		@ link register save eliminated.
+  36:ws2812b.c     **** }
+ 311              		.loc 1 36 5 view .LVU42
+  37:ws2812b.c     **** ws2812b_state ws2812b_update(ws2812b *hws)
+ 312              		.loc 1 37 1 is_stmt 0 view .LVU43
+ 313 0000 0020     		movs	r0, #0
+ 314              	.LVL11:
+  37:ws2812b.c     **** ws2812b_state ws2812b_update(ws2812b *hws)
+ 315              		.loc 1 37 1 view .LVU44
+ 316              		@ sp needed
+ 317 0002 7047     		bx	lr
+ 318              		.cfi_endproc
+ 319              	.LFE299:
+ 321              		.section	.text.ws2812b_update,"ax",%progbits
+ 322              		.align	1
+ 323              		.global	ws2812b_update
+ 324              		.syntax unified
+ 325              		.code	16
+ 326              		.thumb_func
+ 328              	ws2812b_update:
+ 329              	.LVL12:
+ 330              	.LFB300:
+  39:ws2812b.c     ****     __disable_irq();
+ 331              		.loc 1 39 1 is_stmt 1 view -0
+ 332              		.cfi_startproc
+ 333              		@ args = 0, pretend = 0, frame = 0
+ 334              		@ frame_needed = 0, uses_anonymous_args = 0
+  39:ws2812b.c     ****     __disable_irq();
+ 335              		.loc 1 39 1 is_stmt 0 view .LVU46
+ 336 0000 10B5     		push	{r4, lr}
+ 337              	.LCFI2:
+ 338              		.cfi_def_cfa_offset 8
+ 339              		.cfi_offset 4, -8
+ 340              		.cfi_offset 14, -4
+  40:ws2812b.c     ****     __ws2812b_update(hws);
+ 341              		.loc 1 40 5 is_stmt 1 view .LVU47
+ 342              	.LBB7:
+ 343              	.LBI7:
+ 344              		.file 2 "Drivers/CMSIS/Include/cmsis_gcc.h"
+   1:Drivers/CMSIS/Include/cmsis_gcc.h **** /**************************************************************************//**
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 9
+
+
+   2:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @file     cmsis_gcc.h
+   3:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @brief    CMSIS compiler GCC header file
+   4:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @version  V5.2.0
+   5:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @date     08. May 2019
+   6:Drivers/CMSIS/Include/cmsis_gcc.h ****  ******************************************************************************/
+   7:Drivers/CMSIS/Include/cmsis_gcc.h **** /*
+   8:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Copyright (c) 2009-2019 Arm Limited. All rights reserved.
+   9:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  10:Drivers/CMSIS/Include/cmsis_gcc.h ****  * SPDX-License-Identifier: Apache-2.0
+  11:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  12:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Licensed under the Apache License, Version 2.0 (the License); you may
+  13:Drivers/CMSIS/Include/cmsis_gcc.h ****  * not use this file except in compliance with the License.
+  14:Drivers/CMSIS/Include/cmsis_gcc.h ****  * You may obtain a copy of the License at
+  15:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  16:Drivers/CMSIS/Include/cmsis_gcc.h ****  * www.apache.org/licenses/LICENSE-2.0
+  17:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  18:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Unless required by applicable law or agreed to in writing, software
+  19:Drivers/CMSIS/Include/cmsis_gcc.h ****  * distributed under the License is distributed on an AS IS BASIS, WITHOUT
+  20:Drivers/CMSIS/Include/cmsis_gcc.h ****  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  21:Drivers/CMSIS/Include/cmsis_gcc.h ****  * See the License for the specific language governing permissions and
+  22:Drivers/CMSIS/Include/cmsis_gcc.h ****  * limitations under the License.
+  23:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+  24:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  25:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __CMSIS_GCC_H
+  26:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_H
+  27:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  28:Drivers/CMSIS/Include/cmsis_gcc.h **** /* ignore some GCC warnings */
+  29:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic push
+  30:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wsign-conversion"
+  31:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wconversion"
+  32:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wunused-parameter"
+  33:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  34:Drivers/CMSIS/Include/cmsis_gcc.h **** /* Fallback for __has_builtin */
+  35:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __has_builtin
+  36:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __has_builtin(x) (0)
+  37:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  38:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  39:Drivers/CMSIS/Include/cmsis_gcc.h **** /* CMSIS compiler specific defines */
+  40:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __ASM
+  41:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ASM                                  __asm
+  42:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  43:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __INLINE
+  44:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __INLINE                               inline
+  45:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  46:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_INLINE
+  47:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_INLINE                        static inline
+  48:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  49:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_FORCEINLINE                 
+  50:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_FORCEINLINE                   __attribute__((always_inline)) static inline
+  51:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif                                           
+  52:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __NO_RETURN
+  53:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __NO_RETURN                            __attribute__((__noreturn__))
+  54:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  55:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __USED
+  56:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __USED                                 __attribute__((used))
+  57:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  58:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __WEAK
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 10
+
+
+  59:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __WEAK                                 __attribute__((weak))
+  60:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  61:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED
+  62:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED                               __attribute__((packed, aligned(1)))
+  63:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  64:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_STRUCT
+  65:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_STRUCT                        struct __attribute__((packed, aligned(1)))
+  66:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  67:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_UNION
+  68:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_UNION                         union __attribute__((packed, aligned(1)))
+  69:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  70:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32        /* deprecated */
+  71:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  72:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  73:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  74:Drivers/CMSIS/Include/cmsis_gcc.h ****   struct __attribute__((packed)) T_UINT32 { uint32_t v; };
+  75:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  76:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32(x)                  (((struct T_UINT32 *)(x))->v)
+  77:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  78:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT16_WRITE
+  79:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  80:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  81:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  82:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_WRITE { uint16_t v; };
+  83:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  84:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT16_WRITE(addr, val)    (void)((((struct T_UINT16_WRITE *)(void *)(addr))-
+  85:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  86:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT16_READ
+  87:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  88:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  89:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  90:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_READ { uint16_t v; };
+  91:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  92:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT16_READ(addr)          (((const struct T_UINT16_READ *)(const void *)(add
+  93:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  94:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32_WRITE
+  95:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  96:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  97:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  98:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_WRITE { uint32_t v; };
+  99:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+ 100:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32_WRITE(addr, val)    (void)((((struct T_UINT32_WRITE *)(void *)(addr))-
+ 101:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 102:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32_READ
+ 103:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+ 104:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+ 105:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+ 106:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_READ { uint32_t v; };
+ 107:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+ 108:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32_READ(addr)          (((const struct T_UINT32_READ *)(const void *)(add
+ 109:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 110:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __ALIGNED
+ 111:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ALIGNED(x)                           __attribute__((aligned(x)))
+ 112:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 113:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __RESTRICT
+ 114:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __RESTRICT                             __restrict
+ 115:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 11
+
+
+ 116:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __COMPILER_BARRIER
+ 117:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __COMPILER_BARRIER()                   __ASM volatile("":::"memory")
+ 118:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 119:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 120:Drivers/CMSIS/Include/cmsis_gcc.h **** /* #########################  Startup and Lowlevel Init  ######################## */
+ 121:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 122:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __PROGRAM_START
+ 123:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 124:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 125:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Initializes data and bss sections
+ 126:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details This default implementations initialized all data and additional bss
+ 127:Drivers/CMSIS/Include/cmsis_gcc.h ****            sections relying on .copy.table and .zero.table specified properly
+ 128:Drivers/CMSIS/Include/cmsis_gcc.h ****            in the used linker script.
+ 129:Drivers/CMSIS/Include/cmsis_gcc.h ****   
+ 130:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 131:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE __NO_RETURN void __cmsis_start(void)
+ 132:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 133:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern void _start(void) __NO_RETURN;
+ 134:Drivers/CMSIS/Include/cmsis_gcc.h ****   
+ 135:Drivers/CMSIS/Include/cmsis_gcc.h ****   typedef struct {
+ 136:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t const* src;
+ 137:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t* dest;
+ 138:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t  wlen;
+ 139:Drivers/CMSIS/Include/cmsis_gcc.h ****   } __copy_table_t;
+ 140:Drivers/CMSIS/Include/cmsis_gcc.h ****   
+ 141:Drivers/CMSIS/Include/cmsis_gcc.h ****   typedef struct {
+ 142:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t* dest;
+ 143:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t  wlen;
+ 144:Drivers/CMSIS/Include/cmsis_gcc.h ****   } __zero_table_t;
+ 145:Drivers/CMSIS/Include/cmsis_gcc.h ****   
+ 146:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __copy_table_t __copy_table_start__;
+ 147:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __copy_table_t __copy_table_end__;
+ 148:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __zero_table_t __zero_table_start__;
+ 149:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __zero_table_t __zero_table_end__;
+ 150:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 151:Drivers/CMSIS/Include/cmsis_gcc.h ****   for (__copy_table_t const* pTable = &__copy_table_start__; pTable < &__copy_table_end__; ++pTable
+ 152:Drivers/CMSIS/Include/cmsis_gcc.h ****     for(uint32_t i=0u; i<pTable->wlen; ++i) {
+ 153:Drivers/CMSIS/Include/cmsis_gcc.h ****       pTable->dest[i] = pTable->src[i];
+ 154:Drivers/CMSIS/Include/cmsis_gcc.h ****     }
+ 155:Drivers/CMSIS/Include/cmsis_gcc.h ****   }
+ 156:Drivers/CMSIS/Include/cmsis_gcc.h ****  
+ 157:Drivers/CMSIS/Include/cmsis_gcc.h ****   for (__zero_table_t const* pTable = &__zero_table_start__; pTable < &__zero_table_end__; ++pTable
+ 158:Drivers/CMSIS/Include/cmsis_gcc.h ****     for(uint32_t i=0u; i<pTable->wlen; ++i) {
+ 159:Drivers/CMSIS/Include/cmsis_gcc.h ****       pTable->dest[i] = 0u;
+ 160:Drivers/CMSIS/Include/cmsis_gcc.h ****     }
+ 161:Drivers/CMSIS/Include/cmsis_gcc.h ****   }
+ 162:Drivers/CMSIS/Include/cmsis_gcc.h ****  
+ 163:Drivers/CMSIS/Include/cmsis_gcc.h ****   _start();
+ 164:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 165:Drivers/CMSIS/Include/cmsis_gcc.h ****   
+ 166:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __PROGRAM_START           __cmsis_start
+ 167:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 168:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 169:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __INITIAL_SP
+ 170:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __INITIAL_SP              __StackTop
+ 171:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 172:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 12
+
+
+ 173:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __STACK_LIMIT
+ 174:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __STACK_LIMIT             __StackLimit
+ 175:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 176:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 177:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __VECTOR_TABLE
+ 178:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __VECTOR_TABLE            __Vectors
+ 179:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 180:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 181:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __VECTOR_TABLE_ATTRIBUTE
+ 182:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __VECTOR_TABLE_ATTRIBUTE  __attribute((used, section(".vectors")))
+ 183:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 184:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 185:Drivers/CMSIS/Include/cmsis_gcc.h **** /* ###########################  Core Function Access  ########################### */
+ 186:Drivers/CMSIS/Include/cmsis_gcc.h **** /** \ingroup  CMSIS_Core_FunctionInterface
+ 187:Drivers/CMSIS/Include/cmsis_gcc.h ****     \defgroup CMSIS_Core_RegAccFunctions CMSIS Core Register Access Functions
+ 188:Drivers/CMSIS/Include/cmsis_gcc.h ****   @{
+ 189:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 190:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 191:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 192:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Enable IRQ Interrupts
+ 193:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Enables IRQ interrupts by clearing the I-bit in the CPSR.
+ 194:Drivers/CMSIS/Include/cmsis_gcc.h ****            Can only be executed in Privileged modes.
+ 195:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 196:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __enable_irq(void)
+ 197:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 198:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("cpsie i" : : : "memory");
+ 199:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 200:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 201:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 202:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 203:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Disable IRQ Interrupts
+ 204:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Disables IRQ interrupts by setting the I-bit in the CPSR.
+ 205:Drivers/CMSIS/Include/cmsis_gcc.h ****            Can only be executed in Privileged modes.
+ 206:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 207:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __disable_irq(void)
+ 345              		.loc 2 207 27 view .LVU48
+ 346              	.LBB8:
+ 208:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 209:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("cpsid i" : : : "memory");
+ 347              		.loc 2 209 3 view .LVU49
+ 348              		.syntax divided
+ 349              	@ 209 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 350 0002 72B6     		cpsid i
+ 351              	@ 0 "" 2
+ 352              		.thumb
+ 353              		.syntax unified
+ 354              	.LBE8:
+ 355              	.LBE7:
+  41:ws2812b.c     ****     __enable_irq();
+ 356              		.loc 1 41 5 view .LVU50
+ 357 0004 024B     		ldr	r3, .L10
+ 358 0006 9847     		blx	r3
+ 359              	.LVL13:
+  42:ws2812b.c     ****     return WS2812B_OK;
+ 360              		.loc 1 42 5 view .LVU51
+ 361              	.LBB9:
+ 362              	.LBI9:
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 13
+
+
+ 196:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 363              		.loc 2 196 27 view .LVU52
+ 364              	.LBB10:
+ 198:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 365              		.loc 2 198 3 view .LVU53
+ 366              		.syntax divided
+ 367              	@ 198 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 368 0008 62B6     		cpsie i
+ 369              	@ 0 "" 2
+ 370              		.thumb
+ 371              		.syntax unified
+ 372              	.LBE10:
+ 373              	.LBE9:
+  43:ws2812b.c     **** }
+ 374              		.loc 1 43 5 view .LVU54
+  44:ws2812b.c     **** ws2812b_state ws2812b_delete_init(ws2812b *hws)
+ 375              		.loc 1 44 1 is_stmt 0 view .LVU55
+ 376 000a 0020     		movs	r0, #0
+ 377              		@ sp needed
+ 378 000c 10BD     		pop	{r4, pc}
+ 379              	.L11:
+ 380 000e C046     		.align	2
+ 381              	.L10:
+ 382 0010 00000000 		.word	__ws2812b_update
+ 383              		.cfi_endproc
+ 384              	.LFE300:
+ 386              		.section	.text.ws2812b_delete_init,"ax",%progbits
+ 387              		.align	1
+ 388              		.global	ws2812b_delete_init
+ 389              		.syntax unified
+ 390              		.code	16
+ 391              		.thumb_func
+ 393              	ws2812b_delete_init:
+ 394              	.LVL14:
+ 395              	.LFB301:
+  46:ws2812b.c     ****     free(hws->buf);
+ 396              		.loc 1 46 1 is_stmt 1 view -0
+ 397              		.cfi_startproc
+ 398              		@ args = 0, pretend = 0, frame = 0
+ 399              		@ frame_needed = 0, uses_anonymous_args = 0
+  46:ws2812b.c     ****     free(hws->buf);
+ 400              		.loc 1 46 1 is_stmt 0 view .LVU57
+ 401 0000 10B5     		push	{r4, lr}
+ 402              	.LCFI3:
+ 403              		.cfi_def_cfa_offset 8
+ 404              		.cfi_offset 4, -8
+ 405              		.cfi_offset 14, -4
+  47:ws2812b.c     ****     return WS2812B_OK;
+ 406              		.loc 1 47 5 is_stmt 1 view .LVU58
+  47:ws2812b.c     ****     return WS2812B_OK;
+ 407              		.loc 1 47 13 is_stmt 0 view .LVU59
+ 408 0002 8068     		ldr	r0, [r0, #8]
+ 409              	.LVL15:
+  47:ws2812b.c     ****     return WS2812B_OK;
+ 410              		.loc 1 47 5 view .LVU60
+ 411 0004 FFF7FEFF 		bl	free
+ 412              	.LVL16:
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 14
+
+
+  48:ws2812b.c     **** }
+ 413              		.loc 1 48 5 is_stmt 1 view .LVU61
+  49:ws2812b.c     **** /* The ws2812b update runs from RAM */
+ 414              		.loc 1 49 1 is_stmt 0 view .LVU62
+ 415 0008 0020     		movs	r0, #0
+ 416              		@ sp needed
+ 417 000a 10BD     		pop	{r4, pc}
+ 418              		.cfi_endproc
+ 419              	.LFE301:
+ 421              		.section	.text.__ws2812b_shift_byte,"ax",%progbits
+ 422              		.align	1
+ 423              		.global	__ws2812b_shift_byte
+ 424              		.syntax unified
+ 425              		.code	16
+ 426              		.thumb_func
+ 428              	__ws2812b_shift_byte:
+ 429              	.LVL17:
+ 430              	.LFB303:
+  86:ws2812b.c     **** uint8_t __ws2812b_shift_byte(uint8_t byte)
+  87:ws2812b.c     **** {
+ 431              		.loc 1 87 1 is_stmt 1 view -0
+ 432              		.cfi_startproc
+ 433              		@ args = 0, pretend = 0, frame = 0
+ 434              		@ frame_needed = 0, uses_anonymous_args = 0
+ 435              		@ link register save eliminated.
+ 436              		.loc 1 87 1 is_stmt 0 view .LVU64
+ 437 0000 0100     		movs	r1, r0
+  88:ws2812b.c     ****     uint8_t shift = 0;
+ 438              		.loc 1 88 5 is_stmt 1 view .LVU65
+ 439              	.LVL18:
+  89:ws2812b.c     ****     for (uint8_t i = 0; i < 8; i++)
+ 440              		.loc 1 89 5 view .LVU66
+ 441              	.LBB11:
+ 442              		.loc 1 89 10 view .LVU67
+ 443              		.loc 1 89 18 is_stmt 0 view .LVU68
+ 444 0002 0023     		movs	r3, #0
+ 445              	.LBE11:
+  88:ws2812b.c     ****     uint8_t shift = 0;
+ 446              		.loc 1 88 13 view .LVU69
+ 447 0004 0020     		movs	r0, #0
+ 448              	.LVL19:
+ 449              	.LBB12:
+ 450              		.loc 1 89 5 view .LVU70
+ 451 0006 03E0     		b	.L14
+ 452              	.LVL20:
+ 453              	.L15:
+  90:ws2812b.c     ****     {
+  91:ws2812b.c     ****         if (byte & (uint8_t)(1 << i))
+  92:ws2812b.c     ****             shift |= 1;
+  93:ws2812b.c     ****         shift <<= 1;
+ 454              		.loc 1 93 9 is_stmt 1 discriminator 2 view .LVU71
+ 455              		.loc 1 93 15 is_stmt 0 discriminator 2 view .LVU72
+ 456 0008 4000     		lsls	r0, r0, #1
+ 457              	.LVL21:
+ 458              		.loc 1 93 15 discriminator 2 view .LVU73
+ 459 000a C0B2     		uxtb	r0, r0
+ 460              	.LVL22:
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 15
+
+
+  89:ws2812b.c     ****     for (uint8_t i = 0; i < 8; i++)
+ 461              		.loc 1 89 32 is_stmt 1 discriminator 2 view .LVU74
+  89:ws2812b.c     ****     for (uint8_t i = 0; i < 8; i++)
+ 462              		.loc 1 89 33 is_stmt 0 discriminator 2 view .LVU75
+ 463 000c 0133     		adds	r3, r3, #1
+ 464              	.LVL23:
+  89:ws2812b.c     ****     for (uint8_t i = 0; i < 8; i++)
+ 465              		.loc 1 89 33 discriminator 2 view .LVU76
+ 466 000e DBB2     		uxtb	r3, r3
+ 467              	.LVL24:
+ 468              	.L14:
+  89:ws2812b.c     ****     for (uint8_t i = 0; i < 8; i++)
+ 469              		.loc 1 89 25 is_stmt 1 discriminator 1 view .LVU77
+  89:ws2812b.c     ****     for (uint8_t i = 0; i < 8; i++)
+ 470              		.loc 1 89 5 is_stmt 0 discriminator 1 view .LVU78
+ 471 0010 072B     		cmp	r3, #7
+ 472 0012 07D8     		bhi	.L17
+  91:ws2812b.c     ****             shift |= 1;
+ 473              		.loc 1 91 9 is_stmt 1 view .LVU79
+  91:ws2812b.c     ****             shift |= 1;
+ 474              		.loc 1 91 32 is_stmt 0 view .LVU80
+ 475 0014 0122     		movs	r2, #1
+ 476 0016 9A40     		lsls	r2, r2, r3
+  91:ws2812b.c     ****             shift |= 1;
+ 477              		.loc 1 91 12 view .LVU81
+ 478 0018 0A42     		tst	r2, r1
+ 479 001a F5D0     		beq	.L15
+  92:ws2812b.c     ****         shift <<= 1;
+ 480              		.loc 1 92 13 is_stmt 1 view .LVU82
+  92:ws2812b.c     ****         shift <<= 1;
+ 481              		.loc 1 92 19 is_stmt 0 view .LVU83
+ 482 001c 0122     		movs	r2, #1
+ 483 001e 1043     		orrs	r0, r2
+ 484              	.LVL25:
+  92:ws2812b.c     ****         shift <<= 1;
+ 485              		.loc 1 92 19 view .LVU84
+ 486 0020 C0B2     		uxtb	r0, r0
+ 487              	.LVL26:
+  92:ws2812b.c     ****         shift <<= 1;
+ 488              		.loc 1 92 19 view .LVU85
+ 489 0022 F1E7     		b	.L15
+ 490              	.L17:
+  92:ws2812b.c     ****         shift <<= 1;
+ 491              		.loc 1 92 19 view .LVU86
+ 492              	.LBE12:
+  94:ws2812b.c     ****     }
+  95:ws2812b.c     ****     return shift;
+ 493              		.loc 1 95 5 is_stmt 1 view .LVU87
+  96:ws2812b.c     **** }
+ 494              		.loc 1 96 1 is_stmt 0 view .LVU88
+ 495              		@ sp needed
+ 496 0024 7047     		bx	lr
+ 497              		.cfi_endproc
+ 498              	.LFE303:
+ 500              		.section	.text.ws2812b_set,"ax",%progbits
+ 501              		.align	1
+ 502              		.global	ws2812b_set
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 16
+
+
+ 503              		.syntax unified
+ 504              		.code	16
+ 505              		.thumb_func
+ 507              	ws2812b_set:
+ 508              	.LVL27:
+ 509              	.LFB298:
+  25:ws2812b.c     ****     if (index >= hws->length)
+ 510              		.loc 1 25 1 is_stmt 1 view -0
+ 511              		.cfi_startproc
+ 512              		@ args = 0, pretend = 0, frame = 0
+ 513              		@ frame_needed = 0, uses_anonymous_args = 0
+  25:ws2812b.c     ****     if (index >= hws->length)
+ 514              		.loc 1 25 1 is_stmt 0 view .LVU90
+ 515 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 516              	.LCFI4:
+ 517              		.cfi_def_cfa_offset 24
+ 518              		.cfi_offset 3, -24
+ 519              		.cfi_offset 4, -20
+ 520              		.cfi_offset 5, -16
+ 521              		.cfi_offset 6, -12
+ 522              		.cfi_offset 7, -8
+ 523              		.cfi_offset 14, -4
+ 524 0002 0500     		movs	r5, r0
+ 525 0004 1400     		movs	r4, r2
+  26:ws2812b.c     ****         return WS2812B_ERROR;
+ 526              		.loc 1 26 5 is_stmt 1 view .LVU91
+  26:ws2812b.c     ****         return WS2812B_ERROR;
+ 527              		.loc 1 26 21 is_stmt 0 view .LVU92
+ 528 0006 C388     		ldrh	r3, [r0, #6]
+  26:ws2812b.c     ****         return WS2812B_ERROR;
+ 529              		.loc 1 26 8 view .LVU93
+ 530 0008 8B42     		cmp	r3, r1
+ 531 000a 1AD9     		bls	.L20
+  28:ws2812b.c     ****     hws->buf[index*3+1] = __ws2812b_shift_byte((uint8_t)(color >> 8));
+ 532              		.loc 1 28 5 is_stmt 1 view .LVU94
+  28:ws2812b.c     ****     hws->buf[index*3+1] = __ws2812b_shift_byte((uint8_t)(color >> 8));
+ 533              		.loc 1 28 19 is_stmt 0 view .LVU95
+ 534 000c 4E00     		lsls	r6, r1, #1
+ 535 000e 7618     		adds	r6, r6, r1
+  28:ws2812b.c     ****     hws->buf[index*3+1] = __ws2812b_shift_byte((uint8_t)(color >> 8));
+ 536              		.loc 1 28 13 view .LVU96
+ 537 0010 8368     		ldr	r3, [r0, #8]
+ 538 0012 9F19     		adds	r7, r3, r6
+  28:ws2812b.c     ****     hws->buf[index*3+1] = __ws2812b_shift_byte((uint8_t)(color >> 8));
+ 539              		.loc 1 28 27 view .LVU97
+ 540 0014 D0B2     		uxtb	r0, r2
+ 541              	.LVL28:
+  28:ws2812b.c     ****     hws->buf[index*3+1] = __ws2812b_shift_byte((uint8_t)(color >> 8));
+ 542              		.loc 1 28 27 view .LVU98
+ 543 0016 FFF7FEFF 		bl	__ws2812b_shift_byte
+ 544              	.LVL29:
+  28:ws2812b.c     ****     hws->buf[index*3+1] = __ws2812b_shift_byte((uint8_t)(color >> 8));
+ 545              		.loc 1 28 25 view .LVU99
+ 546 001a 3870     		strb	r0, [r7]
+  29:ws2812b.c     ****     hws->buf[index*3+2] = __ws2812b_shift_byte((uint8_t)(color >> 16));
+ 547              		.loc 1 29 5 is_stmt 1 view .LVU100
+  29:ws2812b.c     ****     hws->buf[index*3+2] = __ws2812b_shift_byte((uint8_t)(color >> 16));
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 17
+
+
+ 548              		.loc 1 29 64 is_stmt 0 view .LVU101
+ 549 001c 200A     		lsrs	r0, r4, #8
+  29:ws2812b.c     ****     hws->buf[index*3+2] = __ws2812b_shift_byte((uint8_t)(color >> 16));
+ 550              		.loc 1 29 13 view .LVU102
+ 551 001e 771C     		adds	r7, r6, #1
+ 552 0020 AB68     		ldr	r3, [r5, #8]
+ 553 0022 9C46     		mov	ip, r3
+ 554 0024 6744     		add	r7, r7, ip
+  29:ws2812b.c     ****     hws->buf[index*3+2] = __ws2812b_shift_byte((uint8_t)(color >> 16));
+ 555              		.loc 1 29 27 view .LVU103
+ 556 0026 C0B2     		uxtb	r0, r0
+ 557 0028 FFF7FEFF 		bl	__ws2812b_shift_byte
+ 558              	.LVL30:
+  29:ws2812b.c     ****     hws->buf[index*3+2] = __ws2812b_shift_byte((uint8_t)(color >> 16));
+ 559              		.loc 1 29 25 view .LVU104
+ 560 002c 3870     		strb	r0, [r7]
+  30:ws2812b.c     ****     return WS2812B_OK;
+ 561              		.loc 1 30 5 is_stmt 1 view .LVU105
+  30:ws2812b.c     ****     return WS2812B_OK;
+ 562              		.loc 1 30 64 is_stmt 0 view .LVU106
+ 563 002e 240C     		lsrs	r4, r4, #16
+ 564              	.LVL31:
+  30:ws2812b.c     ****     return WS2812B_OK;
+ 565              		.loc 1 30 8 view .LVU107
+ 566 0030 AB68     		ldr	r3, [r5, #8]
+  30:ws2812b.c     ****     return WS2812B_OK;
+ 567              		.loc 1 30 13 view .LVU108
+ 568 0032 0236     		adds	r6, r6, #2
+ 569 0034 9E19     		adds	r6, r3, r6
+  30:ws2812b.c     ****     return WS2812B_OK;
+ 570              		.loc 1 30 27 view .LVU109
+ 571 0036 E0B2     		uxtb	r0, r4
+ 572 0038 FFF7FEFF 		bl	__ws2812b_shift_byte
+ 573              	.LVL32:
+  30:ws2812b.c     ****     return WS2812B_OK;
+ 574              		.loc 1 30 25 view .LVU110
+ 575 003c 3070     		strb	r0, [r6]
+  31:ws2812b.c     **** }
+ 576              		.loc 1 31 5 is_stmt 1 view .LVU111
+  31:ws2812b.c     **** }
+ 577              		.loc 1 31 12 is_stmt 0 view .LVU112
+ 578 003e 0020     		movs	r0, #0
+ 579              	.L19:
+  32:ws2812b.c     **** uint32_t ws2812b_get(ws2812b *hws, uint16_t index)
+ 580              		.loc 1 32 1 view .LVU113
+ 581              		@ sp needed
+ 582              	.LVL33:
+  32:ws2812b.c     **** uint32_t ws2812b_get(ws2812b *hws, uint16_t index)
+ 583              		.loc 1 32 1 view .LVU114
+ 584 0040 F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 585              	.LVL34:
+ 586              	.L20:
+  27:ws2812b.c     ****     hws->buf[index*3]   = __ws2812b_shift_byte((uint8_t)color);
+ 587              		.loc 1 27 16 view .LVU115
+ 588 0042 0120     		movs	r0, #1
+ 589              	.LVL35:
+  27:ws2812b.c     ****     hws->buf[index*3]   = __ws2812b_shift_byte((uint8_t)color);
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 18
+
+
+ 590              		.loc 1 27 16 view .LVU116
+ 591 0044 FCE7     		b	.L19
+ 592              		.cfi_endproc
+ 593              	.LFE298:
+ 595              		.text
+ 596              	.Letext0:
+ 597              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 598              		.file 4 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 599              		.file 5 "Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g031xx.h"
+ 600              		.file 6 "ws2812b.h"
+ 601              		.file 7 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 602              		.file 8 "Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_dma.h"
+ 603              		.file 9 "<built-in>"
+ARM GAS  C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s 			page 19
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 ws2812b.c
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:18     .code_in_ram:00000000 $t
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:24     .code_in_ram:00000000 __ws2812b_update
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:246    .text.ws2812b_init:00000000 $t
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:252    .text.ws2812b_init:00000000 ws2812b_init
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:297    .text.ws2812b_get:00000000 $t
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:303    .text.ws2812b_get:00000000 ws2812b_get
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:322    .text.ws2812b_update:00000000 $t
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:328    .text.ws2812b_update:00000000 ws2812b_update
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:382    .text.ws2812b_update:00000010 $d
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:387    .text.ws2812b_delete_init:00000000 $t
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:393    .text.ws2812b_delete_init:00000000 ws2812b_delete_init
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:422    .text.__ws2812b_shift_byte:00000000 $t
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:428    .text.__ws2812b_shift_byte:00000000 __ws2812b_shift_byte
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:501    .text.ws2812b_set:00000000 $t
+C:\Users\Xusniyor\AppData\Local\Temp\ccqAWRCs.s:507    .text.ws2812b_set:00000000 ws2812b_set
+
+UNDEFINED SYMBOLS
+malloc
+memset
+free
