@@ -8,7 +8,7 @@ stm32g0_ws2812b
 
 ### Install and add path
 
-### Built
+### Build
 
 1. Clone the repo
    ```sh
