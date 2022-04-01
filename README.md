@@ -1,10 +1,12 @@
 # stm32g0_ws2812b
 stm32g0_ws2812b
 
-### Built With
+### Download
 
 * [make](https://sourceforge.net/projects/gnuwin32/)
 * [openOCD](https://github.com/xpack-dev-tools/openocd-xpack/releases)
+
+### Install and add path
 
 ### Built
 
